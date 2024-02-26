@@ -47,4 +47,4 @@ It's also possible to avoid replicating on a per-message basis:
 ```
 ./pulsar-client --url http://localhost:8081 --listener-name external produce --disable-replication persistent://edge1/replicated/events --messages "Hello world produced to cluster b not replicated"
 ```
-And you will see the message only on cluster b, while it will never appea on cluster a.
+And you will see the message only on cluster b, while it will never appear on cluster a.
