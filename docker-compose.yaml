@@ -37,8 +37,8 @@ services:
                --cluster cluster-a \
                --zookeeper zookeeper:2181 \
                --configuration-store zookeeper:2181 \
-               --web-service-url http://broker:8080 \
-               --broker-service-url pulsar://broker:6650
+               --web-service-url http://broker-main:8080 \
+               --broker-service-url pulsar://broker-main:6650
     depends_on:
       zookeeper-main:
         condition: service_healthy
@@ -46,7 +46,7 @@ services:
   # Start bookie
   bookie-main:
     image: apachepulsar/pulsar:latest
-    container_name: bookie
+    container_name: bookie-main
     restart: on-failure
     networks:
       - pulsar-network
@@ -56,7 +56,6 @@ services:
       - metadataServiceUri=metadata-store:zk:zookeeper:2181
       # otherwise every time we run docker compose uo or down we fail to start due to Cookie
       # See: https://github.com/apache/bookkeeper/blob/405e72acf42bb1104296447ea8840d805094c787/bookkeeper-server/src/main/java/org/apache/bookkeeper/bookie/Cookie.java#L57-68
-      - advertisedAddress=bookie
       - BOOKIE_MEM=-Xms512m -Xmx512m -XX:MaxDirectMemorySize=256m
     depends_on:
       zookeeper-main:
@@ -71,8 +70,8 @@ services:
   # Start broker
   broker-main:
     image: apachepulsar/pulsar:latest
-    container_name: broker
-    hostname: broker
+    container_name: broker-main
+    hostname: broker-main
     restart: on-failure
     networks:
       - pulsar-network
@@ -83,8 +82,7 @@ services:
       - managedLedgerDefaultEnsembleSize=1
       - managedLedgerDefaultWriteQuorum=1
       - managedLedgerDefaultAckQuorum=1
-      - advertisedAddress=broker
-      - advertisedListeners=external:pulsar://127.0.0.1:6650
+      - advertisedListeners=internal:pulsar://broker-main:6650,external:pulsar://127.0.0.1:6650
       - PULSAR_MEM=-Xms512m -Xmx512m -XX:MaxDirectMemorySize=256m
     depends_on:
       zookeeper-main:
@@ -130,8 +128,8 @@ services:
                --cluster cluster-b \
                --zookeeper zookeeper-edge1:2181 \
                --configuration-store zookeeper-edge1:2181 \
-               --web-service-url http://broker-edge1:8080 \
-               --broker-service-url pulsar://broker-edge1:6650
+               --web-service-url http://broker-edge1:8081 \
+               --broker-service-url pulsar://broker-edge1:6651
     depends_on:
       zookeeper-edge1:
         condition: service_healthy
@@ -147,7 +145,6 @@ services:
       - clusterName=cluster-b
       - zkServers=zookeeper-edge1:2181
       - metadataServiceUri=metadata-store:zk:zookeeper-edge1:2181
-      - advertisedAddress=bookie-edge1
       - BOOKIE_MEM=-Xms512m -Xmx512m -XX:MaxDirectMemorySize=256m
     depends_on:
       zookeeper-edge1:
@@ -174,8 +171,7 @@ services:
       - managedLedgerDefaultEnsembleSize=1
       - managedLedgerDefaultWriteQuorum=1
       - managedLedgerDefaultAckQuorum=1
-      - advertisedAddress=broker-edge1
-      - advertisedListeners=external:pulsar://127.0.0.1:6650
+      - advertisedListeners=internal:pulsar://broker-edge1:6650,external:pulsar://127.0.0.1:6651
       - PULSAR_MEM=-Xms512m -Xmx512m -XX:MaxDirectMemorySize=256m
     depends_on:
       zookeeper-edge1:
